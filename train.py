@@ -1,9 +1,13 @@
-from typing import Callable, Tuple
+import enum
+from functools import partial
+from pathlib import Path
+from typing import Callable, Tuple, Any
 
 import optuna
 import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestRegressor
+from xgboost import XGBRegressor
 from sklearn.metrics import r2_score, mean_absolute_error
 from sklearn.model_selection import cross_val_score, train_test_split
 from sklearn.pipeline import Pipeline
@@ -14,16 +18,41 @@ from data.preprocessing import make_preprocessing_pipeline
 
 optuna.logging.set_verbosity(optuna.logging.INFO)
 
+class ModelType(enum.Enum):
+    RANDOM_FOREST = "random_forest"
+    XGBOOST = "xgboost"
 
-def get_model(n_estimators: int, max_depth: int) -> BaseEstimator:
+    @classmethod
+    def make(cls, s: str) -> "ModelType":
+        try:
+            return cls(s.lower())
+        except ValueError:
+            raise ValueError(f"Invalid model type: {s}. Choose from {[e.value for e in cls]}")
 
-    model = RandomForestRegressor(
-        n_estimators=n_estimators,
-        max_depth=max_depth,
-        criterion="squared_error",
-        random_state=42,
-        n_jobs=-1,
-    )
+def get_model(model_type: ModelType, **kwargs: Any) -> BaseEstimator:
+    if model_type == ModelType.RANDOM_FOREST:
+        model = RandomForestRegressor(
+            n_estimators=kwargs.get("n_estimators"),
+            max_depth=kwargs.get("max_depth"),
+            criterion=kwargs.get("criterion", "squared_error"),
+            random_state=kwargs.get("random_state", 42),
+            n_jobs=kwargs.get("n_jobs", -1),
+        )
+
+    elif model_type == ModelType.XGBOOST:
+        model = XGBRegressor(
+            n_estimators=kwargs.get("n_estimators"),
+            max_depth=kwargs.get("max_depth"),
+            learning_rate=kwargs.get("learning_rate"),
+            objective=kwargs.get("objective", "reg:squarederror"),
+            tree_method=kwargs.get("tree_method", "hist"),
+            n_jobs=kwargs.get("n_jobs", -1),
+            random_state=kwargs.get("random_state", 42),
+        )
+
+    else:
+        raise ValueError(f"Unknown model_type: {model_type}")
+
     return model
 
 
@@ -34,7 +63,7 @@ def make_pipeline(model: BaseEstimator) -> Pipeline:
 
 
 # 1. Define the objective function
-def objective(trial: optuna.trial.Trial) -> float:
+def objective(trial: optuna.trial.Trial, model_type: ModelType) -> float:
     """This function defines the objective (loss) function for Optuna
 
     Args:
@@ -55,17 +84,16 @@ def objective(trial: optuna.trial.Trial) -> float:
     """
 
     X, y = load_X_y()
-    n_estimators = trial.suggest_int("n_estimators", 100, 500)
-    max_depth = trial.suggest_int("max_depth", 4, 20)  # integer from 2 to 10
+    kwargs = {"n_estimators": trial.suggest_int("n_estimators", 100, 500),
+              "max_depth": trial.suggest_int("max_depth", 4, 20)}
 
-    print(
-        f"Trial {trial.number} | Params: "
-        f"n_estimators={n_estimators}, "
-        f"max_depth={max_depth}"
-    )
+    if model_type == ModelType.XGBOOST:
+        kwargs["learning_rate"] = trial.suggest_float("learning_rate", 0.01, 0.3, log=True)
+
+    model = get_model(model_type, **kwargs)
+    print(f"Trial {trial.number} | Model: {model_type} | Params: {trial.params}")
 
     # The trial object effectively decides what value to try next for that parameter. After suggesting values, create a model with suggested hyperparameters
-    model = get_model(n_estimators=n_estimators, max_depth=max_depth)
     pipeline = make_pipeline(model)
     # use 3-fold cross-validation
     score = cross_val_score(
@@ -74,17 +102,18 @@ def objective(trial: optuna.trial.Trial) -> float:
     return score  # maximize -MAE <==> minimize MAE
 
 
-def tune(objective: Callable, n_trials=5) -> optuna.study.Study:
+def tune(objective: Callable, model_type: ModelType, n_trials=5) -> optuna.study.Study:
     study = optuna.create_study(
         study_name="rfr",
         direction="maximize",
         load_if_exists=True,
     )
-    study.optimize(objective, n_trials=n_trials)
+    obj = partial(objective, model_type=model_type)
+    study.optimize(obj, n_trials=n_trials)
     return study
 
 
-def fit(study: optuna.study.Study) -> Pipeline:
+def fit(study: optuna.study.Study, model_type: ModelType) -> Pipeline:
     X, y = load_X_y()
     try:
         best_params = study.best_params
@@ -92,7 +121,7 @@ def fit(study: optuna.study.Study) -> Pipeline:
         raise RuntimeError("No successful trials found in the Optuna study.") from e
 
     model = get_model(
-        n_estimators=best_params["n_estimators"], max_depth=best_params["max_depth"]
+        model_type=model_type, **best_params
     )
     pipeline = make_pipeline(model)
 
@@ -105,28 +134,10 @@ def predict(pipeline: Pipeline, save_to_csv: bool = False) -> None | pd.DataFram
     preds = pipeline.predict(X_test)
     df_preds = pd.DataFrame({"Id": range(len(preds)), "Predicted": preds})
     if save_to_csv:
-        df_preds.to_csv("../preds/predictions.csv", index=False)
+        output_dir = Path.cwd() / "preds"  # Use current working directory
+        output_dir.mkdir(parents=True, exist_ok=True)
+        output_path = output_dir / "predictions.csv"
+        df_preds.to_csv(output_path, index=False)
+        return None
     else:
         return preds
-
-
-def compute_r2(study: optuna.study.Study) -> Tuple[float, float]:
-    X, y = load_X_y()
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
-    try:
-        best_params = study.best_params
-    except ValueError as e:
-        raise RuntimeError("No successful trials found in the Optuna study.") from e
-
-    model = get_model(
-        n_estimators=best_params["n_estimators"], max_depth=best_params["max_depth"]
-    )
-    pipeline = make_pipeline(model)
-
-    pipeline.fit(X_train, y_train)
-    y_pred = pipeline.predict(X_test)
-    mae = mean_absolute_error(y_test, y_pred)
-    r2 = r2_score(y_test, y_pred)
-    return r2, mae
