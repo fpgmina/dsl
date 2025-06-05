@@ -20,5 +20,5 @@ def get_test_data() -> pd.DataFrame:
 def load_X_y() -> Tuple[pd.DataFrame, pd.DataFrame]:
     df = get_train_data()
     X = df.copy()
-    y = X.pop('price')
+    y = X.pop("price")
     return X, y

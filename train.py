@@ -45,9 +45,7 @@ def objective(trial: optuna.trial.Trial) -> float:
     )
 
     pipeline = make_preprocessing_pipeline()
-    pipeline = Pipeline(pipeline.steps + [
-        ("model", model)
-    ])
+    pipeline = Pipeline(pipeline.steps + [("model", model)])
     # use 3-fold cross-validation and return the mean accuracy
     score = cross_val_score(pipeline, X, y, cv=3, scoring="accuracy").mean()
     return score  # Optuna will try to maximize this score
