@@ -55,8 +55,8 @@ def objective(trial: optuna.trial.Trial) -> float:
     """
 
     X, y = load_X_y()
-    n_estimators = trial.suggest_int("n_estimators", 50, 200)  # integer from 50 to 200
-    max_depth = trial.suggest_int("max_depth", 2, 10)  # integer from 2 to 10
+    n_estimators = trial.suggest_int("n_estimators", 100, 500)
+    max_depth = trial.suggest_int("max_depth", 4, 20)  # integer from 2 to 10
 
     print(
         f"Trial {trial.number} | Params: "
