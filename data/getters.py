@@ -22,3 +22,8 @@ def load_X_y() -> Tuple[pd.DataFrame, pd.DataFrame]:
     X = df.copy()
     y = X.pop("price")
     return X, y
+
+
+def load_X_test() -> pd.DataFrame:
+    df = get_test_data()
+    return df

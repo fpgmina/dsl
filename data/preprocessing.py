@@ -6,10 +6,14 @@ from sklearn.preprocessing import OneHotEncoder, FunctionTransformer, StandardSc
 
 
 def make_column_transformer() -> ColumnTransformer:
-    num_cols = ["square_feet", "bathrooms", "bedrooms"]
-    cat_cols = ["category", "currency", "price_type", "source", "state", "cityname"]
-    bool_cols = ["has_photo", "pets_allowed"]
-    text_col = "text"
+    num_cols = [
+        "square_feet",
+        "bathrooms",
+        "bedrooms",
+    ]  # consider transforming bathrooms and bedrooms as categoricals,
+    # for random forests also numerical should work
+    cat_cols = ["category", "source", "state", "cityname", "has_photo", "pets_allowed"]
+    # text_col = "text"
 
     # Preprocessing pipelines
     num_pipeline = Pipeline(
@@ -23,24 +27,16 @@ def make_column_transformer() -> ColumnTransformer:
         ]
     )
 
-    bool_pipeline = Pipeline(
-        [
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("to_float", FunctionTransformer(lambda x: x.astype(float))),
-        ]
-    )
-
-    text_pipeline = make_pipeline(
-        FunctionTransformer(lambda x: x[text_col], validate=False),
-        TfidfVectorizer(max_features=1000, stop_words="english"),
-    )
+    # text_pipeline = make_pipeline(
+    #     FunctionTransformer(lambda x: x[text_col], validate=False),
+    #     TfidfVectorizer(max_features=1000, stop_words="english"),
+    # )
 
     preprocessor = ColumnTransformer(
         transformers=[
             ("num", num_pipeline, num_cols),
             ("cat", cat_pipeline, cat_cols),
-            ("bool", bool_pipeline, bool_cols),
-            ("txt", text_pipeline, [text_col]),
+            # ("txt", text_pipeline, [text_col]),
         ]
     )
 
@@ -49,7 +45,19 @@ def make_column_transformer() -> ColumnTransformer:
 
 def make_preprocessing_pipeline() -> Pipeline:
 
-    COLS_TO_DROP = ["id", "currency", "price_type", "title", "body", "time"]
+    # id is same as index
+    # currency is all USD
+    # price_type is all monthly
+    COLS_TO_DROP = [
+        "id",
+        "currency",
+        "price_type",
+        "title",
+        "body",
+        "time",
+        "longitude",
+        "latitude",
+    ]
 
     def drop_columns(X):
         return X.drop(columns=COLS_TO_DROP, errors="ignore")
@@ -62,7 +70,7 @@ def make_preprocessing_pipeline() -> Pipeline:
 
     pipeline = Pipeline(
         steps=[
-            ("add_text", FunctionTransformer(add_text_column, validate=False)),
+            # ("add_text", FunctionTransformer(add_text_column, validate=False)),
             ("drop_cols", FunctionTransformer(drop_columns, validate=False)),
             ("preprocessor", make_column_transformer()),
         ]

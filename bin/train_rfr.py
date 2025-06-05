@@ -1,12 +1,14 @@
-import optuna
+import argparse
 
-from train import objective
+from train import objective, tune, fit, predict
 
 
 if __name__ == "__main__":
-    study = optuna.create_study(direction="maximize")
-    #  run the optimization for 20 trials
-    study.optimize(objective, n_trials=20)
 
-    print("Best hyperparameters:", study.best_params)
-    print("Best accuracy:", study.best_value)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--n_trials", type=float, default=2)
+    args = parser.parse_args()
+
+    study = tune(objective, n_trials=args.n_trials)
+    pipeline = fit(study)
+    preds = predict(pipeline, save_to_csv=True)
