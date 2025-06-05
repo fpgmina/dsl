@@ -7,3 +7,7 @@ dependencies:
   - seaborn
   - black
   - ruff
+  - jupyterlab
+  - pip
+  - pip:
+    - optuna
