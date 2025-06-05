@@ -12,3 +12,6 @@ if __name__ == "__main__":
     study = tune(objective, n_trials=args.n_trials)
     pipeline = fit(study)
     preds = predict(pipeline, save_to_csv=True)
+
+
+# python -m bin.train_rfr --n_trials 20
