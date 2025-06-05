@@ -103,16 +103,11 @@ def fit(study: optuna.study.Study) -> Pipeline:
 def predict(pipeline: Pipeline, save_to_csv: bool = False) -> None | pd.DataFrame:
     X_test = load_X_test()
     preds = pipeline.predict(X_test)
-    df_preds = pd.DataFrame({
-        "Id": range(len(preds)),
-        "Predicted": preds
-    })
+    df_preds = pd.DataFrame({"Id": range(len(preds)), "Predicted": preds})
     if save_to_csv:
         df_preds.to_csv("../preds/predictions.csv", index=False)
     else:
         return preds
-
-
 
 
 def compute_r2(study: optuna.study.Study) -> Tuple[float, float]:
