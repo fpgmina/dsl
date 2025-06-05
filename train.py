@@ -1,15 +1,14 @@
 import enum
 from functools import partial
 from pathlib import Path
-from typing import Callable, Tuple, Any
+from typing import Callable, Any
 
 import optuna
 import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
-from sklearn.metrics import r2_score, mean_absolute_error
-from sklearn.model_selection import cross_val_score, train_test_split
+from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 
 from data.getters import load_X_y, load_X_test
