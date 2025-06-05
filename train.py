@@ -88,14 +88,16 @@ def objective(trial: optuna.trial.Trial, model_type: ModelType) -> float:
 
     X, y = load_X_y()
     kwargs = {
-        "n_estimators": trial.suggest_int("n_estimators", 100, 500),
+        "n_estimators": trial.suggest_int("n_estimators", 300, 1000),
         "max_depth": trial.suggest_int("max_depth", 4, 20),
     }
 
     if model_type == ModelType.XGBOOST:
         kwargs["learning_rate"] = trial.suggest_float(
-            "learning_rate", 0.01, 0.3, log=True
+            "learning_rate", 0.01, 0.1, log=True
         )
+        kwargs["reg_lambda"] =  trial.suggest_float("reg_lambda", 0.1, 10.0, log=True)
+        kwargs["reg_alpha"] = trial.suggest_float("reg_alpha", 0, 1.0)
 
     model = get_model(model_type, **kwargs)
     print(f"Trial {trial.number} | Model: {model_type} | Params: {trial.params}")
