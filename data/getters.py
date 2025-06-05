@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import pandas as pd
 import pathlib
 
@@ -13,3 +15,10 @@ def get_train_data() -> pd.DataFrame:
 def get_test_data() -> pd.DataFrame:
     df = pd.read_csv(ROOT_PATH / "evaluation.csv")
     return df
+
+
+def load_X_y() -> Tuple[pd.DataFrame, pd.DataFrame]:
+    df = get_train_data()
+    X = df.copy()
+    y = X.pop('price')
+    return X, y
