@@ -96,7 +96,7 @@ def objective(trial: optuna.trial.Trial, model_type: ModelType) -> float:
         kwargs["learning_rate"] = trial.suggest_float(
             "learning_rate", 0.01, 0.1, log=True
         )
-        kwargs["reg_lambda"] =  trial.suggest_float("reg_lambda", 0.1, 10.0, log=True)
+        kwargs["reg_lambda"] = trial.suggest_float("reg_lambda", 0.1, 10.0, log=True)
         kwargs["reg_alpha"] = trial.suggest_float("reg_alpha", 0, 1.0)
 
     model = get_model(model_type, **kwargs)
