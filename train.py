@@ -18,6 +18,7 @@ from data.preprocessing import make_preprocessing_pipeline
 
 optuna.logging.set_verbosity(optuna.logging.INFO)
 
+
 class ModelType(enum.Enum):
     RANDOM_FOREST = "random_forest"
     XGBOOST = "xgboost"
@@ -27,7 +28,10 @@ class ModelType(enum.Enum):
         try:
             return cls(s.lower())
         except ValueError:
-            raise ValueError(f"Invalid model type: {s}. Choose from {[e.value for e in cls]}")
+            raise ValueError(
+                f"Invalid model type: {s}. Choose from {[e.value for e in cls]}"
+            )
+
 
 def get_model(model_type: ModelType, **kwargs: Any) -> BaseEstimator:
     if model_type == ModelType.RANDOM_FOREST:
@@ -84,11 +88,15 @@ def objective(trial: optuna.trial.Trial, model_type: ModelType) -> float:
     """
 
     X, y = load_X_y()
-    kwargs = {"n_estimators": trial.suggest_int("n_estimators", 100, 500),
-              "max_depth": trial.suggest_int("max_depth", 4, 20)}
+    kwargs = {
+        "n_estimators": trial.suggest_int("n_estimators", 100, 500),
+        "max_depth": trial.suggest_int("max_depth", 4, 20),
+    }
 
     if model_type == ModelType.XGBOOST:
-        kwargs["learning_rate"] = trial.suggest_float("learning_rate", 0.01, 0.3, log=True)
+        kwargs["learning_rate"] = trial.suggest_float(
+            "learning_rate", 0.01, 0.3, log=True
+        )
 
     model = get_model(model_type, **kwargs)
     print(f"Trial {trial.number} | Model: {model_type} | Params: {trial.params}")
@@ -120,9 +128,7 @@ def fit(study: optuna.study.Study, model_type: ModelType) -> Pipeline:
     except ValueError as e:
         raise RuntimeError("No successful trials found in the Optuna study.") from e
 
-    model = get_model(
-        model_type=model_type, **best_params
-    )
+    model = get_model(model_type=model_type, **best_params)
     pipeline = make_pipeline(model)
 
     pipeline.fit(X, y)

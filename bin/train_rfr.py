@@ -10,7 +10,7 @@ if __name__ == "__main__":
         "--model_type",
         type=ModelType.make,  # Use the enum's custom method as the converter
         required=True,
-        help="Model type to use"
+        help="Model type to use",
     )
     args = parser.parse_args()
     model_type = args.model_type
