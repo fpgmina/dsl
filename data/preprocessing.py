@@ -16,6 +16,8 @@ def make_column_transformer() -> ColumnTransformer:
         "square_feet",
         "longitude",
         "latitude",
+        "bedrooms",
+        "bathrooms",
     ]  # consider transforming bathrooms and bedrooms as categoricals,
     # for random forests also numerical should work
     cat_cols = [
@@ -29,10 +31,10 @@ def make_column_transformer() -> ColumnTransformer:
 
     # Preprocessing pipelines
     num_pipeline = Pipeline(
-        [("imputer", SimpleImputer(strategy="median")), ("scaler", StandardScaler())]
+        [("imputer", SimpleImputer(strategy="median"))]
     )
 
-    ordinal_pipeline = Pipeline(
+    cat_pipeline = Pipeline(
         [
             ("imputer", SimpleImputer(strategy="most_frequent")),
             (
@@ -49,13 +51,6 @@ def make_column_transformer() -> ColumnTransformer:
         ]
     )
 
-    cat_pipeline = Pipeline(
-        [
-            ("imputer", SimpleImputer(strategy="most_frequent")),
-            ("onehot", OneHotEncoder(handle_unknown="ignore")),
-        ]
-    )
-
     # text_pipeline = make_pipeline(
     #     FunctionTransformer(lambda x: x[text_col], validate=False),
     #     TfidfVectorizer(max_features=1000, stop_words="english"),
@@ -65,7 +60,6 @@ def make_column_transformer() -> ColumnTransformer:
         transformers=[
             ("num", num_pipeline, num_cols),
             ("cat", cat_pipeline, cat_cols),
-            ("ord", ordinal_pipeline, ["bedrooms", "bathrooms"]),
             ("multi_amen", multi_hot_pipeline, ["amenities"]),
             # ("multi_pets", multi_hot_pipeline, ["pets_allowed"]),
             # ("txt", text_pipeline, [text_col]),
