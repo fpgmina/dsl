@@ -30,9 +30,7 @@ def make_column_transformer() -> ColumnTransformer:
     # text_col = "text"
 
     # Preprocessing pipelines
-    num_pipeline = Pipeline(
-        [("imputer", SimpleImputer(strategy="median"))]
-    )
+    num_pipeline = Pipeline([("imputer", SimpleImputer(strategy="median"))])
 
     cat_pipeline = Pipeline(
         [
