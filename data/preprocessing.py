@@ -9,6 +9,8 @@ def make_column_transformer() -> ColumnTransformer:
         "square_feet",
         "bathrooms",
         "bedrooms",
+        "longitude",
+        "latitude",
     ]  # consider transforming bathrooms and bedrooms as categoricals,
     # for random forests also numerical should work
     cat_cols = ["category", "source", "state", "cityname", "has_photo", "pets_allowed"]
@@ -54,8 +56,6 @@ def make_preprocessing_pipeline() -> Pipeline:
         "title",
         "body",
         "time",
-        "longitude",
-        "latitude",
     ]
 
     def drop_columns(X):
