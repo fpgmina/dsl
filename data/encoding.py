@@ -39,7 +39,6 @@ class GeoClusteringTransformer(BaseEstimator, TransformerMixin):
         self.cluster_models_ = {}
         self.cluster_offsets_ = {}
 
-
     def fit(self, X, y=None):
         self.cluster_models_ = {}
         self.cluster_offsets_ = {}
@@ -58,7 +57,6 @@ class GeoClusteringTransformer(BaseEstimator, TransformerMixin):
                 self.cluster_offsets_[city] = -1
                 continue
 
-
             if len(unique_coords) < 2:
                 self.cluster_models_[city] = None
                 self.cluster_offsets_[city] = -1
@@ -68,8 +66,8 @@ class GeoClusteringTransformer(BaseEstimator, TransformerMixin):
             model = KMeans(n_clusters=k, random_state=42)
             model.fit(coords)
 
-            self.cluster_models_[city] = model # save the model for the city
-            self.cluster_offsets_[city] = offset # save the offset for the city
+            self.cluster_models_[city] = model  # save the model for the city
+            self.cluster_offsets_[city] = offset  # save the offset for the city
             offset += k  # increment by the number of clusters of the city
 
         return self

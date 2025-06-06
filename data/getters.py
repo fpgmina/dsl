@@ -36,7 +36,7 @@ def get_transformed_X() -> pd.DataFrame:
 
     X_transformed = preproc_pipeline.fit_transform(X)
 
-    preprocessor = preproc_pipeline.named_steps['preprocessor']
+    preprocessor = preproc_pipeline.named_steps["preprocessor"]
     feature_names = preprocessor.get_feature_names_out()
     X_transformed_df = pd.DataFrame(X_transformed, columns=feature_names)
     return X_transformed_df
