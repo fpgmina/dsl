@@ -7,13 +7,20 @@ from sklearn.preprocessing import OneHotEncoder, FunctionTransformer, StandardSc
 def make_column_transformer() -> ColumnTransformer:
     num_cols = [
         "square_feet",
-        "bathrooms",
-        "bedrooms",
         "longitude",
         "latitude",
     ]  # consider transforming bathrooms and bedrooms as categoricals,
     # for random forests also numerical should work
-    cat_cols = ["category", "source", "state", "cityname", "has_photo", "pets_allowed"]
+    cat_cols = [
+        "category",
+        "source",
+        "state",
+        "cityname",
+        "has_photo",
+        "pets_allowed",
+        "bathrooms",
+        "bedrooms",
+    ]
     # text_col = "text"
 
     # Preprocessing pipelines
