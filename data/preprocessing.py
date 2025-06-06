@@ -1,7 +1,14 @@
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import OneHotEncoder, FunctionTransformer, StandardScaler
+from sklearn.preprocessing import (
+    OneHotEncoder,
+    FunctionTransformer,
+    StandardScaler,
+    OrdinalEncoder,
+)
+
+from data.encoding import MultiHotEncoder
 
 
 def make_column_transformer() -> ColumnTransformer:
@@ -17,15 +24,29 @@ def make_column_transformer() -> ColumnTransformer:
         "state",
         "cityname",
         "has_photo",
-        "pets_allowed",
-        "bathrooms",
-        "bedrooms",
     ]
     # text_col = "text"
 
     # Preprocessing pipelines
     num_pipeline = Pipeline(
         [("imputer", SimpleImputer(strategy="median")), ("scaler", StandardScaler())]
+    )
+
+    ordinal_pipeline = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            (
+                "ordinal",
+                OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1),
+            ),
+        ]
+    )
+
+    multi_hot_pipeline = Pipeline(
+        [
+            ("imputer", SimpleImputer(strategy="most_frequent")),
+            ("multihot", MultiHotEncoder()),
+        ]
     )
 
     cat_pipeline = Pipeline(
@@ -44,6 +65,9 @@ def make_column_transformer() -> ColumnTransformer:
         transformers=[
             ("num", num_pipeline, num_cols),
             ("cat", cat_pipeline, cat_cols),
+            ("ord", ordinal_pipeline, ["bedrooms", "bathrooms"]),
+            ("multi_amen", multi_hot_pipeline, ["amenities"]),
+            # ("multi_pets", multi_hot_pipeline, ["pets_allowed"]),
             # ("txt", text_pipeline, [text_col]),
         ]
     )
@@ -60,7 +84,6 @@ def make_preprocessing_pipeline() -> Pipeline:
         "id",
         "currency",
         "price_type",
-        "title",
         "body",
         "time",
     ]
