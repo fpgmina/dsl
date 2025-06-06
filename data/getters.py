@@ -3,6 +3,7 @@ from typing import Tuple
 import pandas as pd
 import pathlib
 
+from data.preprocessing import make_preprocessing_pipeline
 
 ROOT_PATH = pathlib.Path("/Volumes/Samsung SSD 990 PRO 1TB/data/dsl")
 
@@ -27,3 +28,15 @@ def load_X_y() -> Tuple[pd.DataFrame, pd.DataFrame]:
 def load_X_test() -> pd.DataFrame:
     df = get_test_data()
     return df
+
+
+def get_transformed_X() -> pd.DataFrame:
+    X, y = load_X_y()
+    preproc_pipeline = make_preprocessing_pipeline()
+
+    X_transformed = preproc_pipeline.fit_transform(X)
+
+    preprocessor = preproc_pipeline.named_steps['preprocessor']
+    feature_names = preprocessor.get_feature_names_out()
+    X_transformed_df = pd.DataFrame(X_transformed, columns=feature_names)
+    return X_transformed_df

@@ -2,13 +2,11 @@ from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
-    OneHotEncoder,
     FunctionTransformer,
-    StandardScaler,
     OrdinalEncoder,
 )
 
-from data.encoding import MultiHotEncoder
+from data.encoding import MultiHotEncoder, GeoClusteringTransformer
 
 
 def make_column_transformer() -> ColumnTransformer:
@@ -42,6 +40,7 @@ def make_column_transformer() -> ColumnTransformer:
         ]
     )
 
+    #
     multi_hot_pipeline = Pipeline(
         [
             ("imputer", SimpleImputer(strategy="most_frequent")),
@@ -58,7 +57,8 @@ def make_column_transformer() -> ColumnTransformer:
         transformers=[
             ("num", num_pipeline, num_cols),
             ("cat", cat_pipeline, cat_cols),
-            ("multi_amen", multi_hot_pipeline, ["amenities"]),
+            ("amen", multi_hot_pipeline, ["amenities"]),
+            ("geo", GeoClusteringTransformer(), ["latitude", "longitude", "cityname"]),
             # ("multi_pets", multi_hot_pipeline, ["pets_allowed"]),
             # ("txt", text_pipeline, [text_col]),
         ]
@@ -78,6 +78,7 @@ def make_preprocessing_pipeline() -> Pipeline:
         "price_type",
         "body",
         "time",
+        "title",
     ]
 
     def drop_columns(X):

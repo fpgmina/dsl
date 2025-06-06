@@ -7,6 +7,8 @@ import optuna
 import pandas as pd
 from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.exceptions import NotFittedError
+from sklearn.utils.validation import check_is_fitted
 from xgboost import XGBRegressor
 from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
@@ -98,13 +100,12 @@ def objective(trial: optuna.trial.Trial, model_type: ModelType) -> float:
         )
         kwargs["reg_lambda"] = trial.suggest_float("reg_lambda", 0.1, 10.0, log=True)
         kwargs["reg_alpha"] = trial.suggest_float("reg_alpha", 0, 1.0)
-        # kwargs["min_child_weight"] = trial.suggest_int("min_child_weight", 1, 10)
-        # kwargs["subsample"] = trial.suggest_float("subsample", 0.6, 1.0)
-        # kwargs["colsample_bytree"] = trial.suggest_float("colsample_bytree", 0.6, 1.0)
-        # kwargs["gamma"] = trial.suggest_float("gamma", 0, 5.0)
+        kwargs["min_child_weight"] = trial.suggest_int("min_child_weight", 1, 10)
+        kwargs["subsample"] = trial.suggest_float("subsample", 0.6, 1.0)
+        kwargs["colsample_bytree"] = trial.suggest_float("colsample_bytree", 0.6, 1.0)
+        kwargs["gamma"] = trial.suggest_float("gamma", 0, 5.0)
 
     model = get_model(model_type, **kwargs)
-    print(f"Trial {trial.number} | Model: {model_type} | Params: {trial.params}")
 
     # The trial object effectively decides what value to try next for that parameter. After suggesting values, create a model with suggested hyperparameters
     pipeline = make_pipeline(model)
@@ -135,13 +136,16 @@ def fit(study: optuna.study.Study, model_type: ModelType) -> Pipeline:
 
     model = get_model(model_type=model_type, **best_params)
     pipeline = make_pipeline(model)
-
     pipeline.fit(X, y)
     return pipeline
 
 
 def predict(pipeline: Pipeline, save_to_csv: bool = False) -> None | pd.DataFrame:
     X_test = load_X_test()
+    try:
+        check_is_fitted(pipeline)
+    except NotFittedError:
+        raise RuntimeError("Pipeline was not fitted before calling predict().")
     preds = pipeline.predict(X_test)
     df_preds = pd.DataFrame({"Id": range(len(preds)), "Predicted": preds})
     if save_to_csv:
