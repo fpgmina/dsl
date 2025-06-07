@@ -19,14 +19,7 @@ def make_column_transformer() -> ColumnTransformer:
         "bathrooms",
     ]  # consider transforming bathrooms and bedrooms as categoricals,
     # for random forests also numerical should work
-    cat_cols = [
-        "category",
-        "source",
-        "state",
-        "cityname",
-        "has_photo",
-        "fee"
-    ]
+    cat_cols = ["category", "source", "state", "cityname", "has_photo", "fee"]
     # text_col = "text"
 
     # Preprocessing pipelines
@@ -64,7 +57,6 @@ def make_column_transformer() -> ColumnTransformer:
             # ("multi_pets", multi_hot_pipeline, ["pets_allowed"]),
             # ("txt", text_pipeline, [text_col]),
             # ("title_tfidf", TfidfVectorizer(max_features=50), "title"),
-
         ]
     )
 
