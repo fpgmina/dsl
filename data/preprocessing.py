@@ -1,4 +1,5 @@
 from sklearn.compose import ColumnTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import (
@@ -24,6 +25,7 @@ def make_column_transformer() -> ColumnTransformer:
         "state",
         "cityname",
         "has_photo",
+        "fee"
     ]
     # text_col = "text"
 
@@ -61,6 +63,8 @@ def make_column_transformer() -> ColumnTransformer:
             ("geo", GeoClusteringTransformer(), ["latitude", "longitude", "cityname"]),
             # ("multi_pets", multi_hot_pipeline, ["pets_allowed"]),
             # ("txt", text_pipeline, [text_col]),
+            # ("title_tfidf", TfidfVectorizer(max_features=50), "title"),
+
         ]
     )
 
@@ -78,7 +82,6 @@ def make_preprocessing_pipeline() -> Pipeline:
         "price_type",
         "body",
         "time",
-        "title",
     ]
 
     def drop_columns(X):
