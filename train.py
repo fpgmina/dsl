@@ -90,8 +90,8 @@ def objective(trial: optuna.trial.Trial, model_type: ModelType) -> float:
 
     X, y = load_X_y()
     kwargs = {
-        "n_estimators": trial.suggest_int("n_estimators", 300, 1000),
-        "max_depth": trial.suggest_int("max_depth", 4, 20),
+        "n_estimators": trial.suggest_int("n_estimators", 300, 1500),
+        "max_depth": trial.suggest_int("max_depth", 4, 30),
     }
 
     if model_type == ModelType.XGBOOST:
