@@ -1,10 +1,10 @@
-import enum
 from functools import partial
 from pathlib import Path
 from typing import Callable, Any
 
 import optuna
 import pandas as pd
+from catboost import CatBoostRegressor
 from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.exceptions import NotFittedError
@@ -14,27 +14,19 @@ from sklearn.model_selection import cross_val_score
 from sklearn.pipeline import Pipeline
 
 from data.getters import load_X_y, load_X_test
-from data.preprocessing import make_preprocessing_pipeline
-
+from data.preprocessing import (
+    make_preprocessing_pipeline,
+    ModelType,
+    get_model_type_from_model,
+)
 
 optuna.logging.set_verbosity(optuna.logging.INFO)
 
 
-class ModelType(enum.Enum):
-    RANDOM_FOREST = "random_forest"
-    XGBOOST = "xgboost"
-
-    @classmethod
-    def make(cls, s: str) -> "ModelType":
-        try:
-            return cls(s.lower())
-        except ValueError:
-            raise ValueError(
-                f"Invalid model type: {s}. Choose from {[e.value for e in cls]}"
-            )
+RegressorType = RandomForestRegressor | CatBoostRegressor | XGBRegressor
 
 
-def get_model(model_type: ModelType, **kwargs: Any) -> BaseEstimator:
+def get_model(model_type: ModelType, **kwargs: Any) -> RegressorType:
     if model_type == ModelType.RANDOM_FOREST:
         model = RandomForestRegressor(
             n_estimators=kwargs.get("n_estimators"),
@@ -54,6 +46,18 @@ def get_model(model_type: ModelType, **kwargs: Any) -> BaseEstimator:
             n_jobs=kwargs.get("n_jobs", -1),
             random_state=kwargs.get("random_state", 42),
         )
+    elif model_type == ModelType.CATBOOST:
+        return CatBoostRegressor(
+            iterations=kwargs.get("n_estimators"),
+            depth=kwargs.get("max_depth"),
+            learning_rate=kwargs.get("learning_rate", 0.1),
+            l2_leaf_reg=kwargs.get("reg_lambda", 3.0),
+            verbose=0,
+            cat_features=kwargs.get("cat_features"),  # this is key
+            random_state=kwargs.get("random_state", 42),
+            thread_count=kwargs.get("thread_count", 12),
+            early_stopping_rounds=kwargs.get("early_stopping_rounds", 50),
+        )
 
     else:
         raise ValueError(f"Unknown model_type: {model_type}")
@@ -62,7 +66,8 @@ def get_model(model_type: ModelType, **kwargs: Any) -> BaseEstimator:
 
 
 def make_pipeline(model: BaseEstimator) -> Pipeline:
-    pipeline = make_preprocessing_pipeline()
+    model_type = get_model_type_from_model(model)
+    pipeline = make_preprocessing_pipeline(model_type)
     pipeline = Pipeline(pipeline.steps + [("model", model)])
     return pipeline
 
@@ -90,24 +95,39 @@ def objective(trial: optuna.trial.Trial, model_type: ModelType) -> float:
 
     X, y = load_X_y()
     kwargs = {
-        "n_estimators": trial.suggest_int("n_estimators", 300, 1500),
-        "max_depth": trial.suggest_int("max_depth", 4, 30),
+        "n_estimators": trial.suggest_int("n_estimators", 400, 1000),
     }
 
     if model_type == ModelType.XGBOOST:
+        kwargs["max_depth"] = trial.suggest_int("max_depth", 4, 20)
         kwargs["learning_rate"] = trial.suggest_float(
             "learning_rate", 0.01, 0.1, log=True
         )
         kwargs["reg_lambda"] = trial.suggest_float("reg_lambda", 0.1, 10.0, log=True)
         kwargs["reg_alpha"] = trial.suggest_float("reg_alpha", 0, 1.0)
-        kwargs["min_child_weight"] = trial.suggest_int("min_child_weight", 1, 10)
-        kwargs["subsample"] = trial.suggest_float("subsample", 0.6, 1.0)
-        kwargs["colsample_bytree"] = trial.suggest_float("colsample_bytree", 0.6, 1.0)
-        kwargs["gamma"] = trial.suggest_float("gamma", 0, 5.0)
+        # kwargs["min_child_weight"] = trial.suggest_int("min_child_weight", 1, 10)
+        # kwargs["subsample"] = trial.suggest_float("subsample", 0.6, 1.0)
+        # kwargs["colsample_bytree"] = trial.suggest_float("colsample_bytree", 0.6, 1.0)
+        # kwargs["gamma"] = trial.suggest_float("gamma", 0, 5.0)
+
+    if model_type == ModelType.CATBOOST:
+        kwargs["max_depth"] = trial.suggest_int(
+            "max_depth", 4, 16
+        )  # maximum tree depth is 16 for catboost
+        kwargs["learning_rate"] = trial.suggest_float(
+            "learning_rate", 0.01, 0.3, log=True
+        )
+        kwargs["reg_lambda"] = trial.suggest_float("reg_lambda", 1, 10.0, log=True)
+        kwargs["cat_features"] = [
+            "state",
+            "cityname",
+            "has_photo",
+            "fee",
+            "geo_cluster",
+        ]
 
     model = get_model(model_type, **kwargs)
 
-    # The trial object effectively decides what value to try next for that parameter. After suggesting values, create a model with suggested hyperparameters
     pipeline = make_pipeline(model)
     # use 3-fold cross-validation
     score = cross_val_score(
@@ -116,13 +136,15 @@ def objective(trial: optuna.trial.Trial, model_type: ModelType) -> float:
     return score  # maximize -MAE <==> minimize MAE
 
 
-def tune(objective: Callable, model_type: ModelType, n_trials=5) -> optuna.study.Study:
+def tune(
+    objective_func: Callable, model_type: ModelType, n_trials=5
+) -> optuna.study.Study:
     study = optuna.create_study(
-        study_name="rfr",
+        study_name=f"regression_{model_type.value}",
         direction="maximize",
         load_if_exists=True,
     )
-    obj = partial(objective, model_type=model_type)
+    obj = partial(objective_func, model_type=model_type)
     study.optimize(obj, n_trials=n_trials)
     return study
 

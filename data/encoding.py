@@ -89,3 +89,20 @@ class GeoClusteringTransformer(BaseEstimator, TransformerMixin):
 
     def get_feature_names_out(self, input_features=None):
         return ["geo_cluster"]
+
+
+class DataFrameOutputWrapper(TransformerMixin, BaseEstimator):
+    def __init__(self, transformer):
+        self.transformer = transformer
+
+    def fit(self, X, y=None):
+        self.transformer.fit(X, y)
+        return self
+
+    def transform(self, X):
+        Xt = self.transformer.transform(X)
+        feature_names = self.transformer.get_feature_names_out()
+        return pd.DataFrame(Xt, columns=feature_names, index=X.index)
+
+    def get_feature_names_out(self, input_features=None):
+        return self.transformer.get_feature_names_out(input_features)

@@ -1,6 +1,7 @@
 import argparse
 
-from train import objective, tune, fit, predict, ModelType
+from train import objective, tune, fit, predict
+from data.preprocessing import ModelType
 
 if __name__ == "__main__":
 

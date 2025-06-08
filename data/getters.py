@@ -3,7 +3,7 @@ from typing import Tuple
 import pandas as pd
 import pathlib
 
-from data.preprocessing import make_preprocessing_pipeline
+from data.preprocessing import make_preprocessing_pipeline, ModelType
 
 ROOT_PATH = pathlib.Path("/Volumes/Samsung SSD 990 PRO 1TB/data/dsl")
 
@@ -30,9 +30,9 @@ def load_X_test() -> pd.DataFrame:
     return df
 
 
-def get_transformed_X() -> pd.DataFrame:
+def get_transformed_X(model_type: ModelType) -> pd.DataFrame:
     X, y = load_X_y()
-    preproc_pipeline = make_preprocessing_pipeline()
+    preproc_pipeline = make_preprocessing_pipeline(model_type)
 
     X_transformed = preproc_pipeline.fit_transform(X)
 

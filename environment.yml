@@ -1,6 +1,7 @@
 name: dsl
 dependencies:
   - python=3.11
+  - catboost
   - xgboost
   - pandas
   - numpy
