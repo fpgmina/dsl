@@ -45,7 +45,6 @@ def get_model(model_type: ModelType, **kwargs: Any) -> RegressorType:
             tree_method=kwargs.get("tree_method", "hist"),
             n_jobs=kwargs.get("n_jobs", -1),
             random_state=kwargs.get("random_state", 42),
-            early_stopping_rounds=kwargs.get("early_stopping_rounds", 50),
         )
     elif model_type == ModelType.CATBOOST:
         return CatBoostRegressor(
