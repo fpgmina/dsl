@@ -34,7 +34,8 @@ def xgboost_feature_importance(
 def plot_optimization_history(
     study: optuna.study.Study, filename: str = "optuna_opt_history"
 ) -> None:
-    fig = optuna_viz.plot_optimization_history(study)
+    ax = optuna_viz.plot_optimization_history(study)
+    fig = ax.get_figure()
     fig.set_size_inches(10, 6)
     fig.tight_layout()
     fig.savefig(filename, dpi=300)

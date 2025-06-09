@@ -106,3 +106,50 @@ class DataFrameOutputWrapper(TransformerMixin, BaseEstimator):
 
     def get_feature_names_out(self, input_features=None):
         return self.transformer.get_feature_names_out(input_features)
+
+
+class KeywordFlagger(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self.keywords = {
+            "luxury": r"\bluxur(?:y|ious|ies)\b",
+            "penthouse": r"\bpenthouse\b",
+            "exclusive": r"\bexclusive\b",
+            "high_end": r"\bhigh[-_\s]?end\b",
+            "renovated": r"\brenovated\b",
+            "updated": r"\bupdated\b",
+            "spacious": r"\bspacious\b",
+            "open_plan": r"\bopen[-_\s]?plan\b",
+            "sunlight": r"\bsunlight|sun-filled|sunny\b",
+            "natural_light": r"\bnatural[-_\s]?light\b",
+            "modern": r"\bmodern\b",
+            "designer": r"\bdesigner\b",
+            "pool": r"\bpool\b",
+            "doorman": r"\bdoorman\b",
+        }
+        self.feature_names_ = None
+
+    def fit(self, X, y=None):
+        self.feature_names_ = [
+            f"{col}_contains_{kw}" for kw in self.keywords for col in ["title", "body"]
+        ]
+        return self
+
+    def transform(self, X):
+        X_new = pd.DataFrame(index=X.index)
+        feature_names = []
+        for name, pattern in self.keywords.items():
+            for col in ["title", "body"]:
+                fname = f"{col}_contains_{name}"
+                X_new[fname] = (
+                    X[col].str.contains(pattern, case=False, na=False).astype(int)
+                )
+                feature_names.append(fname)
+        self.feature_names_ = feature_names  # Ensure it's always set
+        return X_new
+
+    def get_feature_names_out(self, input_features=None):
+        if not hasattr(self, "feature_names_"):
+            raise AttributeError(
+                "Transformer has not been fitted yet. Call fit or fit_transform first."
+            )
+        return self.feature_names_

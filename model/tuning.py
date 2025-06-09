@@ -73,24 +73,10 @@ def make_pipeline(model: BaseEstimator) -> Pipeline:
 
 
 def objective(trial: optuna.trial.Trial, model_type: ModelType) -> float:
-    """This function defines the objective (loss) function for Optuna
-
-    Args:
-        trial (optuna.trial.Trial): An Optuna trial object
-        model_type (ModelType): The model type to use
-
-    Returns:
-        float: The loss value to minimize
-
-    Notes:
-        Use the trial object to suggest hyperparameter values and then evaluate your model with those values.
-        The trial provides suggest_* methods to pick hyperparameter values:
-        *  For integers: use trial.suggest_int("param_name", low, high) to sample an integer in [low, high] .
-        * For floats: use trial.suggest_float("param_name", low, high, log=True/False) for continuous ranges (set log=True for log-scale sampling) .
-        * For categorical choices: use trial.suggest_categorical("param_name", [option1, option2, ...]) to choose from discrete options .
-        Each call to a trial.suggest_... defines one hyperparameter of the search space.
-         (for example, compute cross-validation score or validation loss).
-        The objective function should then return a single value (the metric) for Optuna to minimize or maximize.
+    """
+    This function defines the objective (loss) function for Optuna
+        The objective function should then return a single value (the metric) for Optuna
+        to minimize or maximize.
     """
 
     X, y = load_X_y()

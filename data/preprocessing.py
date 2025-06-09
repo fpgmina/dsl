@@ -17,6 +17,7 @@ from data.transform import (
     MultiHotEncoder,
     GeoClusteringTransformer,
     DataFrameOutputWrapper,
+    KeywordFlagger,
 )
 
 
@@ -33,6 +34,17 @@ class ModelType(enum.Enum):
             raise ValueError(
                 f"Invalid model type: {s}. Choose from {[e.value for e in cls]}"
             )
+
+
+def get_model_type_from_model(model: BaseEstimator) -> ModelType:
+    if isinstance(model, RandomForestRegressor):
+        return ModelType.RANDOM_FOREST
+    elif isinstance(model, XGBRegressor):
+        return ModelType.XGBOOST
+    elif isinstance(model, CatBoostRegressor):
+        return ModelType.CATBOOST
+    else:
+        raise ValueError(f"Unknown model class: {type(model)}")
 
 
 def make_column_transformer(model_type: ModelType) -> ColumnTransformer:
@@ -86,9 +98,15 @@ def make_column_transformer(model_type: ModelType) -> ColumnTransformer:
             ("cat", cat_pipeline, cat_cols),
             ("amen", multi_hot_pipeline, ["amenities"]),
             ("geo", GeoClusteringTransformer(), ["latitude", "longitude", "cityname"]),
-            # ("multi_pets", multi_hot_pipeline, ["pets_allowed"]),
             # ("txt", text_pipeline, [text_col]),
-            # ("title_tfidf", TfidfVectorizer(max_features=50), "title"),
+            # (
+            #     "title_tfidf",
+            #     TfidfVectorizer(
+            #         max_features=20, min_df=5, stop_words="english", ngram_range=(1, 1)
+            #     ),
+            #     "title",
+            # ),
+            ("keyword_flags", KeywordFlagger(), ["title", "body"]),
         ],
         remainder="drop",
         verbose_feature_names_out=False,
@@ -106,7 +124,6 @@ def make_preprocessing_pipeline(model_type: ModelType) -> Pipeline:
         "id",
         "currency",
         "price_type",
-        "body",
         "time",
         "category",  # with exception of < 50 items they are all of one type
     ]
@@ -145,14 +162,3 @@ def make_preprocessing_pipeline(model_type: ModelType) -> Pipeline:
     )
 
     return pipeline
-
-
-def get_model_type_from_model(model: BaseEstimator) -> ModelType:
-    if isinstance(model, RandomForestRegressor):
-        return ModelType.RANDOM_FOREST
-    elif isinstance(model, XGBRegressor):
-        return ModelType.XGBOOST
-    elif isinstance(model, CatBoostRegressor):
-        return ModelType.CATBOOST
-    else:
-        raise ValueError(f"Unknown model class: {type(model)}")
