@@ -142,7 +142,8 @@ def fit(study: optuna.study.Study, model_type: ModelType) -> Pipeline:
         best_params = study.best_params
     except ValueError as e:
         raise RuntimeError("No successful trials found in the Optuna study.") from e
-
+    print("Best hyperparameters:")
+    print(study.best_params)
     model = get_model(model_type=model_type, **best_params)
     pipeline = make_pipeline(model)
     pipeline.fit(X, y)
