@@ -5,7 +5,9 @@ from sklearn.pipeline import Pipeline
 import optuna.visualization.matplotlib as optuna_viz
 
 
-def xgboost_feature_importance(pipeline: Pipeline, filename: str = "feature_importance.png") -> None:
+def xgboost_feature_importance(
+    pipeline: Pipeline, filename: str = "feature_importance.png"
+) -> None:
     """
     Extract the XGBoost model from a scikit-learn pipeline and save the feature importance plot.
     """
@@ -18,10 +20,10 @@ def xgboost_feature_importance(pipeline: Pipeline, filename: str = "feature_impo
     xgboost.plot_importance(
         model,
         ax=ax,
-        importance_type='gain',
-        title='XGBoost Feature Importance',
-        xlabel='Gain',
-        show_values=False
+        importance_type="gain",
+        title="XGBoost Feature Importance",
+        xlabel="Gain",
+        show_values=False,
     )
 
     plt.tight_layout()
@@ -29,7 +31,9 @@ def xgboost_feature_importance(pipeline: Pipeline, filename: str = "feature_impo
     plt.close()
 
 
-def plot_optimization_history(study: optuna.study.Study, filename: str = "optuna_opt_history") -> None:
+def plot_optimization_history(
+    study: optuna.study.Study, filename: str = "optuna_opt_history"
+) -> None:
     fig = optuna_viz.plot_optimization_history(study)
     fig.set_size_inches(10, 6)
     fig.tight_layout()
