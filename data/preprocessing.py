@@ -13,7 +13,7 @@ from sklearn.preprocessing import (
 )
 from xgboost import XGBRegressor
 
-from data.encoding import (
+from data.transform import (
     MultiHotEncoder,
     GeoClusteringTransformer,
     DataFrameOutputWrapper,
