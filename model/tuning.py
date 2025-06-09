@@ -45,6 +45,7 @@ def get_model(model_type: ModelType, **kwargs: Any) -> RegressorType:
             tree_method=kwargs.get("tree_method", "hist"),
             n_jobs=kwargs.get("n_jobs", -1),
             random_state=kwargs.get("random_state", 42),
+            early_stopping_rounds=kwargs.get("early_stopping_rounds", 50),
         )
     elif model_type == ModelType.CATBOOST:
         return CatBoostRegressor(
@@ -91,9 +92,9 @@ def objective(trial: optuna.trial.Trial, model_type: ModelType) -> float:
         )
         kwargs["reg_lambda"] = trial.suggest_float("reg_lambda", 0.1, 10.0, log=True)
         kwargs["reg_alpha"] = trial.suggest_float("reg_alpha", 0, 1.0)
-        # kwargs["min_child_weight"] = trial.suggest_int("min_child_weight", 1, 10)
-        # kwargs["subsample"] = trial.suggest_float("subsample", 0.6, 1.0)
-        # kwargs["colsample_bytree"] = trial.suggest_float("colsample_bytree", 0.6, 1.0)
+        kwargs["min_child_weight"] = trial.suggest_int("min_child_weight", 1, 10)
+        kwargs["subsample"] = trial.suggest_float("subsample", 0.6, 1.0)
+        kwargs["colsample_bytree"] = trial.suggest_float("colsample_bytree", 0.6, 1.0)
         # kwargs["gamma"] = trial.suggest_float("gamma", 0, 5.0)
 
     if model_type == ModelType.CATBOOST:
