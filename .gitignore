@@ -1,3 +1,4 @@
+*.png
 *.ipynb
 preds
 catboost_info
